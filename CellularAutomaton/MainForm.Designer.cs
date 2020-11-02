@@ -1,6 +1,6 @@
 ﻿namespace CellularAutomaton
 {
-	partial class Form1
+	partial class MainForm
 	{
 		/// <summary>
 		/// Обязательная переменная конструктора.
@@ -30,12 +30,14 @@
 		{
 			this.SuspendLayout();
 			// 
-			// Form1
+			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(800, 450);
-			this.Name = "Form1";
+			this.ClientSize = new System.Drawing.Size(484, 461);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+			this.Name = "MainForm";
+			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Клеточный автомат";
 			this.ResumeLayout(false);
 

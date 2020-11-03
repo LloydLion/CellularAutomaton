@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CellularAutomaton
 {
-	struct CellStade
+	class CellStade
 	{
 		public static readonly CellStade Empty = new CellStade(Color.White);
 		public static readonly CellStade Filled = new CellStade(Color.Black);

@@ -31,6 +31,7 @@
 			this.components = new System.ComponentModel.Container();
 			this.pictureBox = new System.Windows.Forms.PictureBox();
 			this.globalTicker = new System.Windows.Forms.Timer(this.components);
+			this.tasksUpdateTimer = new System.Windows.Forms.Timer(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -46,8 +47,13 @@
 			// globalTicker
 			// 
 			this.globalTicker.Enabled = true;
-			this.globalTicker.Interval = 1500;
+			this.globalTicker.Interval = 3500;
 			this.globalTicker.Tick += new System.EventHandler(this.GlobalTicker_Tick);
+			// 
+			// tasksUpdateTimer
+			// 
+			this.tasksUpdateTimer.Interval = 300;
+			this.tasksUpdateTimer.Tick += new System.EventHandler(this.TasksUpdateTimer_Tick);
 			// 
 			// MainForm
 			// 
@@ -69,6 +75,7 @@
 
 		private System.Windows.Forms.PictureBox pictureBox;
 		private System.Windows.Forms.Timer globalTicker;
+		private System.Windows.Forms.Timer tasksUpdateTimer;
 	}
 }
 

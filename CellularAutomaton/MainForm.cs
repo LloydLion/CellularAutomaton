@@ -13,10 +13,10 @@ namespace CellularAutomaton
 {
 	public partial class MainForm : Form
 	{
-		private readonly CellStade[][,] buffers = new CellStade[2][,];
-		private CellStade[,] mainBuffer;
-		readonly Random random = new Random();
-		int density = 2;
+		private const int resolution = 16;
+		private readonly GameLogic logic;
+		private Task logicUpdateTask;
+
 
 		public MainForm()
 		{
@@ -24,45 +24,28 @@ namespace CellularAutomaton
 
 			if(Screen.PrimaryScreen.Bounds.Height >= Screen.PrimaryScreen.Bounds.Width)
 			{
-				this.Height = (int)(Math.Round(Screen.PrimaryScreen.Bounds.Height * 0.75f / 4f) * 4);
-				this.Width = (int)(Math.Round(this.Height * (Screen.PrimaryScreen.Bounds.Width / (float)Screen.PrimaryScreen.Bounds.Height) / 4f) * 4f);
+				this.Height = (int)(Math.Round(Screen.PrimaryScreen.Bounds.Height * 0.75f / (float)resolution) * resolution);
+				this.Width = (int)(Math.Round(this.Height * (Screen.PrimaryScreen.Bounds.Width / (float)Screen.PrimaryScreen.Bounds.Height) / (float)resolution) * resolution);
 			}
 			else
 			{
-				this.Width = (int)(Math.Round(Screen.PrimaryScreen.Bounds.Width * 0.75f / 4f) * 4f);
-				this.Height = (int)(Math.Round(this.Width * (Screen.PrimaryScreen.Bounds.Height / (float)Screen.PrimaryScreen.Bounds.Width) / 4f) * 4f);
+				this.Width = (int)(Math.Round(Screen.PrimaryScreen.Bounds.Width * 0.75f / (float)resolution) * resolution);
+				this.Height = (int)(Math.Round(this.Width * (Screen.PrimaryScreen.Bounds.Height / (float)Screen.PrimaryScreen.Bounds.Width) / (float)resolution) * resolution);
 			}
+
+			logic = new GameLogic(pictureBox.Width / resolution, pictureBox.Height / resolution);
 		}
 
 		private void GlobalTicker_Tick(object sender, EventArgs e)
 		{
-			for (int x = 0; x < mainBuffer.GetUpperBound(0); x++)
-			{
-				for (int y = 0; y < mainBuffer.GetUpperBound(1); y++)
-				{
-					mainBuffer[x, y] = random.Next(density) == 0 ? CellStade.Filled : CellStade.Empty;
-				}
-			}
-
-			density++;
-			UpdateGraphicsFromField();
-
+			if (logicUpdateTask != null) return;
+			tasksUpdateTimer.Enabled = true;
+			logicUpdateTask = Task.Run(logic.Update);
 		}
 
 		private void MainForm_Load(object sender, EventArgs e)
 		{
-			buffers[0] = mainBuffer = new CellStade[pictureBox.Width / 4, pictureBox.Height / 4];
-			buffers[1] = new CellStade[pictureBox.Width / 4, pictureBox.Height / 4];
-
-
-			for (int x = 0; x < mainBuffer.GetUpperBound(0); x++)
-			{
-				for (int y = 0; y < mainBuffer.GetUpperBound(1); y++)
-				{
-					mainBuffer[x, y] = random.Next(3) == 0 ? CellStade.Filled : CellStade.Empty; 
-				}
-			}
-
+			logic.Init();
 			UpdateGraphicsFromField();
 		}
 
@@ -71,12 +54,14 @@ namespace CellularAutomaton
 			pictureBox.Image = new Bitmap(pictureBox.Width, pictureBox.Height);
 			var graphics = Graphics.FromImage(pictureBox.Image);
 			graphics.FillRectangle(Brushes.Red, new Rectangle(new Point(0, 0), new Size(pictureBox.Width, pictureBox.Height)));
+			var mainBuffer = logic.GetField();
 
 			for (int x = 0; x < mainBuffer.GetUpperBound(0); x++)
 			{
 				for (int y = 0; y < mainBuffer.GetUpperBound(1); y++)
 				{
-					graphics.FillRectangle(new SolidBrush(mainBuffer[x, y].DrawColor), new Rectangle(new Point(x * 4, y * 4), new Size(4, 4)));
+					if(mainBuffer[x, y] == null) graphics.FillRectangle(Brushes.Blue, new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
+					else graphics.FillRectangle(new SolidBrush(mainBuffer[x, y].DrawColor), new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
 				}
 			}
 
@@ -84,6 +69,16 @@ namespace CellularAutomaton
 			pictureBox.Update();
 
 			graphics.Dispose();
+		}
+
+		private void TasksUpdateTimer_Tick(object sender, EventArgs e)
+		{
+			if(logicUpdateTask.IsCompleted)
+			{
+				UpdateGraphicsFromField();
+				tasksUpdateTimer.Enabled = false;
+				logicUpdateTask = null;
+			}
 		}
 	}
 }

@@ -31,7 +31,7 @@
 			this.components = new System.ComponentModel.Container();
 			this.pictureBox = new System.Windows.Forms.PictureBox();
 			this.globalTicker = new System.Windows.Forms.Timer(this.components);
-			this.tasksUpdateTimer = new System.Windows.Forms.Timer(this.components);
+			this.saveGameImageDialog = new System.Windows.Forms.SaveFileDialog();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -40,7 +40,7 @@
 			this.pictureBox.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pictureBox.Location = new System.Drawing.Point(0, 0);
 			this.pictureBox.Name = "pictureBox";
-			this.pictureBox.Size = new System.Drawing.Size(484, 461);
+			this.pictureBox.Size = new System.Drawing.Size(800, 800);
 			this.pictureBox.TabIndex = 0;
 			this.pictureBox.TabStop = false;
 			this.pictureBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_MouseMove);
@@ -48,21 +48,20 @@
 			// globalTicker
 			// 
 			this.globalTicker.Enabled = true;
-			this.globalTicker.Interval = 2500;
 			this.globalTicker.Tick += new System.EventHandler(this.GlobalTicker_Tick);
 			// 
-			// tasksUpdateTimer
+			// saveGameImageDialog
 			// 
-			this.tasksUpdateTimer.Interval = 300;
-			this.tasksUpdateTimer.Tick += new System.EventHandler(this.TasksUpdateTimer_Tick);
+			this.saveGameImageDialog.DefaultExt = "png";
+			this.saveGameImageDialog.Filter = "PNG image|*.png|All files|*.*";
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(484, 461);
+			this.ClientSize = new System.Drawing.Size(800, 800);
 			this.Controls.Add(this.pictureBox);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
 			this.Name = "MainForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Клеточный автомат";
@@ -77,7 +76,7 @@
 
 		private System.Windows.Forms.PictureBox pictureBox;
 		private System.Windows.Forms.Timer globalTicker;
-		private System.Windows.Forms.Timer tasksUpdateTimer;
+		private System.Windows.Forms.SaveFileDialog saveGameImageDialog;
 	}
 }
 

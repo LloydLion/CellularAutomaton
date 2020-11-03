@@ -14,36 +14,34 @@ namespace CellularAutomaton
 	public partial class MainForm : Form
 	{
 		private const int resolution = 16;
+		private const int scale = 60;
+
 		private readonly GameLogic logic;
 		private Task logicUpdateTask;
 		private bool stopped;
+		private bool prepareStop;
 
 
 		public MainForm()
 		{
 			InitializeComponent();
 
-			if(Screen.PrimaryScreen.Bounds.Height >= Screen.PrimaryScreen.Bounds.Width)
-			{
-				this.Height = (int)(Math.Round(Screen.PrimaryScreen.Bounds.Height * 0.75f / (float)resolution) * resolution);
-				this.Width = (int)(Math.Round(this.Height * (Screen.PrimaryScreen.Bounds.Width / (float)Screen.PrimaryScreen.Bounds.Height) / (float)resolution) * resolution);
-			}
-			else
-			{
-				this.Width = (int)(Math.Round(Screen.PrimaryScreen.Bounds.Width * 0.75f / (float)resolution) * resolution);
-				this.Height = (int)(Math.Round(this.Width * (Screen.PrimaryScreen.Bounds.Height / (float)Screen.PrimaryScreen.Bounds.Width) / (float)resolution) * resolution);
-			}
+			Height = Width = scale * resolution;
 
-			logic = new GameLogic(pictureBox.Width / resolution, pictureBox.Height / resolution);
+			logic = new GameLogic(scale, scale);
 		}
 
 		private void GlobalTicker_Tick(object sender, EventArgs e)
 		{
-			if(logicUpdateTask != null) return;
-			tasksUpdateTimer.Enabled = true;
-			logicUpdateTask = Task.Run(logic.Update);
-		}
+			if(logicUpdateTask == null) logicUpdateTask = Task.Run(logic.Update);
+			if (logicUpdateTask.IsCompleted == true)
+			{
+				UpdateGraphicsFromField();
+				logicUpdateTask = Task.Run(logic.Update);
 
+				if (prepareStop == true) { UpdateStopStatus(); prepareStop = false; }
+			}
+		}
 		private void MainForm_Load(object sender, EventArgs e)
 		{
 			logic.GenerateRandomField();
@@ -57,9 +55,9 @@ namespace CellularAutomaton
 			graphics.FillRectangle(Brushes.Red, new Rectangle(new Point(0, 0), new Size(pictureBox.Width, pictureBox.Height)));
 			var mainBuffer = logic.GetField();
 
-			for (int x = 0; x < mainBuffer.GetUpperBound(0); x++)
+			for (int x = 0; x <= mainBuffer.GetUpperBound(0); x++)
 			{
-				for (int y = 0; y < mainBuffer.GetUpperBound(1); y++)
+				for (int y = 0; y <= mainBuffer.GetUpperBound(1); y++)
 				{
 					if(mainBuffer[x, y] == null) graphics.FillRectangle(Brushes.Blue, new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
 					else graphics.FillRectangle(new SolidBrush(mainBuffer[x, y].DrawColor), new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
@@ -70,16 +68,6 @@ namespace CellularAutomaton
 			pictureBox.Update();
 
 			graphics.Dispose();
-		}
-
-		private void TasksUpdateTimer_Tick(object sender, EventArgs e)
-		{
-			if(logicUpdateTask.IsCompleted)
-			{
-				UpdateGraphicsFromField();
-				tasksUpdateTimer.Enabled = false;
-				logicUpdateTask = null;
-			}
 		}
 
 		private void PictureBox_MouseMove(object sender, MouseEventArgs e)
@@ -107,19 +95,15 @@ namespace CellularAutomaton
 
 		private void MainForm_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if(e.KeyChar == 'f' && logicUpdateTask == null)
+			if(e.KeyChar == 'f')
 			{
-				if(stopped == false)
+				if (logicUpdateTask.IsCompleted)
 				{
-					stopped = true;
-					globalTicker.Enabled = false;
-					Text = "Клеточный автомат (STOPPED)";
+					UpdateStopStatus();
 				}
 				else
 				{
-					stopped = false;
-					globalTicker.Enabled = true;
-					Text = "Клеточный автомат";
+					prepareStop = !stopped;
 				}
 			}
 
@@ -141,8 +125,36 @@ namespace CellularAutomaton
 				}
 			}
 
+			if(e.KeyChar == 's' && stopped == true)
+			{
+				var res = saveGameImageDialog.ShowDialog();
+				if (res == DialogResult.OK)
+				{
+					Image img = pictureBox.Image;
+					img.Save(saveGameImageDialog.FileName);
+				}
+			}
+
 
 			UpdateGraphicsFromField();
+		}
+
+		private void UpdateStopStatus()
+		{
+			if (stopped == false)
+			{
+				MessageBox.Show("Игра остановлена", "вы нажали клавишу [f]");
+				stopped = true;
+				globalTicker.Enabled = false;
+				Text = "Клеточный автомат (STOPPED)";
+			}
+			else
+			{
+				MessageBox.Show("Игра востоновлена", "вы нажали клавишу [f]");
+				stopped = false;
+				globalTicker.Enabled = true;
+				Text = "Клеточный автомат";
+			}
 		}
 	}
 }

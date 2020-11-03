@@ -8,15 +8,15 @@ namespace CellularAutomaton
 {
 	class GameLogic
 	{
-		private readonly CellStade[][,] buffers = new CellStade[2][,];
-		private readonly CellStade[,] mainBuffer;
+		private readonly CellStadeKey[][,] buffers = new CellStadeKey[2][,];
+		private readonly CellStadeKey[,] mainBuffer;
 		private readonly Random random = new Random();
 
 
 		public GameLogic(int wight, int height)
 		{
-			buffers[0] = mainBuffer = new CellStade[wight, height];
-			buffers[1] = new CellStade[wight, height];
+			buffers[0] = mainBuffer = new CellStadeKey[wight, height];
+			buffers[1] = new CellStadeKey[wight, height];
 		}
 
 
@@ -26,12 +26,12 @@ namespace CellularAutomaton
 			{
 				for (int y = 0; y <= mainBuffer.GetUpperBound(1); y++)
 				{
-					mainBuffer[x, y] = random.Next(3) == 0 ? CellStade.Filled : CellStade.Empty;
+					mainBuffer[x, y] = random.Next(3) == 0 ? CellStadeKey.Filled : CellStadeKey.Empty;
 				}
 			}
 		}
 
-		public void ClearField(CellStade clear)
+		public void ClearField(CellStadeKey clear)
 		{
 			for (int x = 0; x <= mainBuffer.GetUpperBound(0); x++)
 			{
@@ -42,9 +42,9 @@ namespace CellularAutomaton
 			}
 		}
 
-		public CellStade[,] GetField()
+		public CellStadeKey[,] GetField()
 		{
-			return (CellStade[,])mainBuffer.Clone();
+			return (CellStadeKey[,])mainBuffer.Clone();
 		}
 
 		public void Update()
@@ -57,18 +57,18 @@ namespace CellularAutomaton
 					var cell = mainBuffer[x, y];
 					buffers[1][x, y] = mainBuffer[x, y];
 
-					if(cell == CellStade.Filled)
+					if(cell == CellStadeKey.Filled)
 					{
 						if(!(neightborsCount == 2 || neightborsCount == 3))
 						{
-							buffers[1][x, y] = CellStade.Empty;
+							buffers[1][x, y] = CellStadeKey.Empty;
 						}
 					}
-					else if(cell == CellStade.Empty)
+					else if(cell == CellStadeKey.Empty)
 					{
 						if(neightborsCount == 3)
 						{
-							buffers[1][x, y] = CellStade.Filled;
+							buffers[1][x, y] = CellStadeKey.Filled;
 						}
 					}
 					else
@@ -87,16 +87,16 @@ namespace CellularAutomaton
 			}
 		}
 
-		public void SetCell(CellStade stade, int x, int y)
+		public void SetCell(CellStadeKey stade, int x, int y)
 		{
 			mainBuffer[x, y] = stade;
 		}
 
-		private CellStade[] GetNeighbors(int x, int y)
+		private CellStadeKey?[] GetNeighbors(int x, int y)
 		{
-			var result = new CellStade[8];
+			var result = new CellStadeKey?[8];
 
-			CellStade get(int fx, int fy) 
+			CellStadeKey? get(int fx, int fy) 
 			{
 				try
 				{ return mainBuffer[fx, fy]; }
@@ -124,9 +124,8 @@ namespace CellularAutomaton
 
 			int has(int fx, int fy) 
 			{
-				try
-				{ return mainBuffer[fx, fy] == CellStade.Filled ? 1 : 0 ; }
-				catch(IndexOutOfRangeException) { return 0; }
+				if(fx > mainBuffer.GetUpperBound(0) || fx < 0 || fy > mainBuffer.GetUpperBound(1) || fy < 0) return 0;
+				return mainBuffer[fx, fy] == CellStadeKey.Filled ? 1 : 0 ;
 			};
 
 			count += has(x - 1, y - 1);

@@ -37,9 +37,9 @@ namespace CellularAutomaton
 			if (logicUpdateTask.IsCompleted == true)
 			{
 				UpdateGraphicsFromField();
-				logicUpdateTask = Task.Run(logic.Update);
-
 				if (prepareStop == true) { UpdateStopStatus(); prepareStop = false; }
+
+				if(stopped == false) logicUpdateTask = Task.Run(logic.Update);
 			}
 		}
 		private void MainForm_Load(object sender, EventArgs e)
@@ -59,8 +59,7 @@ namespace CellularAutomaton
 			{
 				for (int y = 0; y <= mainBuffer.GetUpperBound(1); y++)
 				{
-					if(mainBuffer[x, y] == null) graphics.FillRectangle(Brushes.Blue, new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
-					else graphics.FillRectangle(new SolidBrush(mainBuffer[x, y].DrawColor), new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
+					graphics.FillRectangle(new SolidBrush(CellStade.KeyConverter[mainBuffer[x, y]].DrawColor), new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
 				}
 			}
 
@@ -77,7 +76,7 @@ namespace CellularAutomaton
 				if(e.Button.HasFlag(MouseButtons.Left))
 				{
 					try
-					{ logic.SetCell(CellStade.Filled, e.Location.X / resolution, e.Location.Y / resolution); }
+					{ logic.SetCell(CellStadeKey.Filled, e.Location.X / resolution, e.Location.Y / resolution); }
 					catch (Exception) { }
 
 					UpdateGraphicsFromField();
@@ -85,7 +84,7 @@ namespace CellularAutomaton
 				else if(e.Button.HasFlag(MouseButtons.Right))
 				{
 					try
-					{ logic.SetCell(CellStade.Empty, e.Location.X / resolution, e.Location.Y / resolution); }
+					{ logic.SetCell(CellStadeKey.Empty, e.Location.X / resolution, e.Location.Y / resolution); }
 					catch (Exception) { }
 
 					UpdateGraphicsFromField();
@@ -121,7 +120,7 @@ namespace CellularAutomaton
 				var res = MessageBox.Show("Вы уверены что хотите очистить поле?", "вы нажали клавишу [c]", MessageBoxButtons.YesNo);
 				if (res == DialogResult.Yes)
 				{
-					logic.ClearField(CellStade.Empty);
+					logic.ClearField(CellStadeKey.Empty);
 				}
 			}
 
@@ -145,14 +144,12 @@ namespace CellularAutomaton
 			{
 				MessageBox.Show("Игра остановлена", "вы нажали клавишу [f]");
 				stopped = true;
-				globalTicker.Enabled = false;
 				Text = "Клеточный автомат (STOPPED)";
 			}
 			else
 			{
 				MessageBox.Show("Игра востоновлена", "вы нажали клавишу [f]");
 				stopped = false;
-				globalTicker.Enabled = true;
 				Text = "Клеточный автомат";
 			}
 		}

@@ -16,6 +16,7 @@ namespace CellularAutomaton
 		private const int resolution = 16;
 		private readonly GameLogic logic;
 		private Task logicUpdateTask;
+		private bool stopped;
 
 
 		public MainForm()
@@ -38,14 +39,14 @@ namespace CellularAutomaton
 
 		private void GlobalTicker_Tick(object sender, EventArgs e)
 		{
-			if (logicUpdateTask != null) return;
+			if(logicUpdateTask != null) return;
 			tasksUpdateTimer.Enabled = true;
 			logicUpdateTask = Task.Run(logic.Update);
 		}
 
 		private void MainForm_Load(object sender, EventArgs e)
 		{
-			logic.Init();
+			logic.GenerateRandomField();
 			UpdateGraphicsFromField();
 		}
 
@@ -79,6 +80,69 @@ namespace CellularAutomaton
 				tasksUpdateTimer.Enabled = false;
 				logicUpdateTask = null;
 			}
+		}
+
+		private void PictureBox_MouseMove(object sender, MouseEventArgs e)
+		{
+			if(stopped)
+			{
+				if(e.Button.HasFlag(MouseButtons.Left))
+				{
+					try
+					{ logic.SetCell(CellStade.Filled, e.Location.X / resolution, e.Location.Y / resolution); }
+					catch (Exception) { }
+
+					UpdateGraphicsFromField();
+				}
+				else if(e.Button.HasFlag(MouseButtons.Right))
+				{
+					try
+					{ logic.SetCell(CellStade.Empty, e.Location.X / resolution, e.Location.Y / resolution); }
+					catch (Exception) { }
+
+					UpdateGraphicsFromField();
+				}
+			}
+		}
+
+		private void MainForm_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			if(e.KeyChar == 'f' && logicUpdateTask == null)
+			{
+				if(stopped == false)
+				{
+					stopped = true;
+					globalTicker.Enabled = false;
+					Text = "Клеточный автомат (STOPPED)";
+				}
+				else
+				{
+					stopped = false;
+					globalTicker.Enabled = true;
+					Text = "Клеточный автомат";
+				}
+			}
+
+			if(e.KeyChar == 'r' && stopped == true)
+			{
+				var res = MessageBox.Show("Вы уверены что хотите случайно заполнить поле?", "вы нажали клавишу [r]", MessageBoxButtons.YesNo);
+				if(res == DialogResult.Yes)
+				{
+					logic.GenerateRandomField();
+				}
+			}
+
+			if (e.KeyChar == 'c' && stopped == true)
+			{
+				var res = MessageBox.Show("Вы уверены что хотите очистить поле?", "вы нажали клавишу [c]", MessageBoxButtons.YesNo);
+				if (res == DialogResult.Yes)
+				{
+					logic.ClearField(CellStade.Empty);
+				}
+			}
+
+
+			UpdateGraphicsFromField();
 		}
 	}
 }

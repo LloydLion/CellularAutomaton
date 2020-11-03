@@ -43,11 +43,12 @@
 			this.pictureBox.Size = new System.Drawing.Size(484, 461);
 			this.pictureBox.TabIndex = 0;
 			this.pictureBox.TabStop = false;
+			this.pictureBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_MouseMove);
 			// 
 			// globalTicker
 			// 
 			this.globalTicker.Enabled = true;
-			this.globalTicker.Interval = 3500;
+			this.globalTicker.Interval = 2500;
 			this.globalTicker.Tick += new System.EventHandler(this.GlobalTicker_Tick);
 			// 
 			// tasksUpdateTimer
@@ -66,6 +67,7 @@
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Клеточный автомат";
 			this.Load += new System.EventHandler(this.MainForm_Load);
+			this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MainForm_KeyPress);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
 			this.ResumeLayout(false);
 

@@ -20,13 +20,24 @@ namespace CellularAutomaton
 		}
 
 
-		public void Init()
+		public void GenerateRandomField()
 		{
 			for (int x = 0; x < mainBuffer.GetUpperBound(0); x++)
 			{
 				for (int y = 0; y < mainBuffer.GetUpperBound(1); y++)
 				{
 					mainBuffer[x, y] = random.Next(3) == 0 ? CellStade.Filled : CellStade.Empty;
+				}
+			}
+		}
+
+		public void ClearField(CellStade clear)
+		{
+			for (int x = 0; x < mainBuffer.GetUpperBound(0); x++)
+			{
+				for (int y = 0; y < mainBuffer.GetUpperBound(1); y++)
+				{
+					mainBuffer[x, y] = clear;
 				}
 			}
 		}
@@ -48,7 +59,7 @@ namespace CellularAutomaton
 
 					if(cell == CellStade.Filled)
 					{
-						if(!(neightborsCount == 3 || neightborsCount == 4))
+						if(!(neightborsCount == 2 || neightborsCount == 3))
 						{
 							buffers[1][x, y] = CellStade.Empty;
 						}
@@ -76,8 +87,12 @@ namespace CellularAutomaton
 			}
 		}
 
+		public void SetCell(CellStade stade, int x, int y)
+		{
+			mainBuffer[x, y] = stade;
+		}
 
-		public CellStade[] GetNeighbors(int x, int y)
+		private CellStade[] GetNeighbors(int x, int y)
 		{
 			var result = new CellStade[8];
 
@@ -103,7 +118,7 @@ namespace CellularAutomaton
 			return result;
 		}
 		
-		public int GetNeighborsCount(int x, int y)
+		private int GetNeighborsCount(int x, int y)
 		{
 			var count = 0;
 

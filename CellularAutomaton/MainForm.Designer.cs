@@ -32,6 +32,7 @@
 			this.pictureBox = new System.Windows.Forms.PictureBox();
 			this.globalTicker = new System.Windows.Forms.Timer(this.components);
 			this.saveGameImageDialog = new System.Windows.Forms.SaveFileDialog();
+			this.selectVideoSaveFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -77,6 +78,7 @@
 		private System.Windows.Forms.PictureBox pictureBox;
 		private System.Windows.Forms.Timer globalTicker;
 		private System.Windows.Forms.SaveFileDialog saveGameImageDialog;
+		private System.Windows.Forms.FolderBrowserDialog selectVideoSaveFolderDialog;
 	}
 }
 

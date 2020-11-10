@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,13 +14,15 @@ namespace CellularAutomaton
 {
 	public partial class MainForm : Form
 	{
-		private const int resolution = 16;
-		private const int scale = 60;
+		private const int resolution = 4;
+		private const int scale = 240;
 
 		private readonly GameLogic logic;
 		private Task logicUpdateTask;
 		private bool stopped;
 		private bool prepareStop;
+		private bool isRecordingVideo;
+		private int videoFrameIndex;
 
 
 		public MainForm()
@@ -36,7 +39,14 @@ namespace CellularAutomaton
 			if(logicUpdateTask == null) logicUpdateTask = Task.Run(logic.Update);
 			if (logicUpdateTask.IsCompleted == true)
 			{
+				if(isRecordingVideo == true && !stopped)
+				{
+					pictureBox.Image.Save(selectVideoSaveFolderDialog.SelectedPath + Path.DirectorySeparatorChar + videoFrameIndex + ".png");
+					videoFrameIndex++;
+				}
+
 				UpdateGraphicsFromField();
+
 				if (prepareStop == true) { UpdateStopStatus(); prepareStop = false; }
 
 				if(stopped == false) logicUpdateTask = Task.Run(logic.Update);
@@ -50,7 +60,7 @@ namespace CellularAutomaton
 
 		private void UpdateGraphicsFromField()
 		{
-			pictureBox.Image = new Bitmap(pictureBox.Width, pictureBox.Height);
+			pictureBox.Image = new Bitmap(scale, scale);
 			var graphics = Graphics.FromImage(pictureBox.Image);
 			graphics.FillRectangle(Brushes.Red, new Rectangle(new Point(0, 0), new Size(pictureBox.Width, pictureBox.Height)));
 			var mainBuffer = logic.GetField();
@@ -59,7 +69,7 @@ namespace CellularAutomaton
 			{
 				for (int y = 0; y <= mainBuffer.GetUpperBound(1); y++)
 				{
-					graphics.FillRectangle(new SolidBrush(CellStade.KeyConverter[mainBuffer[x, y]].DrawColor), new Rectangle(new Point(x * resolution, y * resolution), new Size(resolution, resolution)));
+					graphics.FillRectangle(new SolidBrush(CellStade.KeyConverter[mainBuffer[x, y]].DrawColor), new Rectangle(new Point(x, y), new Size(1, 1)));
 				}
 			}
 
@@ -134,6 +144,24 @@ namespace CellularAutomaton
 				}
 			}
 
+			if (e.KeyChar == 'v')
+			{
+				if(isRecordingVideo == false && stopped == true)
+				{
+					if(selectVideoSaveFolderDialog.ShowDialog() == DialogResult.OK)
+					{
+						isRecordingVideo = true;
+						videoFrameIndex = 0;
+						UpdateStopStatus();
+					}
+				}
+				else if(isRecordingVideo == true)
+				{
+					MessageBox.Show("Video frames saved");
+					isRecordingVideo = false;
+					if (stopped == false) UpdateStopStatus();
+				}
+			}
 
 			UpdateGraphicsFromField();
 		}

@@ -122,17 +122,17 @@ namespace CellularAutomaton
 			}
 		}
 
-		private void MainForm_KeyPress(object sender, KeyPressEventArgs e)
+		private void MainForm_KeyPress(object sender, KeyEventArgs e)
 		{
 			bool handled = false;
 
-			if(e.KeyChar == 'f')
+			if(e.KeyCode == Keys.F)
 			{
 				handled = true;
 				if(stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped) ResumeGame(); else StopGame();
 			}
 
-			if(e.KeyChar == 'r' && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
+			if(e.KeyCode == Keys.R && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
 				handled = true;
 				var res = MessageBox.Show("Вы уверены что хотите случайно заполнить поле?", "вы нажали клавишу [r]", MessageBoxButtons.YesNo);
@@ -142,7 +142,7 @@ namespace CellularAutomaton
 				}
 			}
 
-			if (e.KeyChar == 'c' && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
+			if (e.KeyCode == Keys.C && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
 				handled = true;
 				var res = MessageBox.Show("Вы уверены что хотите очистить поле?", "вы нажали клавишу [c]", MessageBoxButtons.YesNo);
@@ -152,7 +152,7 @@ namespace CellularAutomaton
 				}
 			}
 
-			if(e.KeyChar == 's' && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
+			if(e.KeyCode == Keys.S && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
 				handled = true;
 				var res = saveGameImageDialog.ShowDialog();
@@ -163,7 +163,7 @@ namespace CellularAutomaton
 				}
 			}
 
-			if (e.KeyChar == 'v')
+			if (e.KeyCode == Keys.V)
 			{
 				handled = true;
 

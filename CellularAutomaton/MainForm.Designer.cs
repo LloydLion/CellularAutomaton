@@ -73,7 +73,7 @@
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Клеточный автомат";
 			this.Load += new System.EventHandler(this.MainForm_Load);
-			this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MainForm_KeyPress);
+			this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyPress);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
 			this.ResumeLayout(false);
 

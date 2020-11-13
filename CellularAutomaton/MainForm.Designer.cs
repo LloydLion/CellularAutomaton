@@ -32,7 +32,7 @@
 			this.pictureBox = new System.Windows.Forms.PictureBox();
 			this.globalTicker = new System.Windows.Forms.Timer(this.components);
 			this.saveGameImageDialog = new System.Windows.Forms.SaveFileDialog();
-			this.selectVideoSaveFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
+			this.saveVideoDialog = new System.Windows.Forms.SaveFileDialog();
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -42,6 +42,7 @@
 			this.pictureBox.Location = new System.Drawing.Point(0, 0);
 			this.pictureBox.Name = "pictureBox";
 			this.pictureBox.Size = new System.Drawing.Size(800, 800);
+			this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
 			this.pictureBox.TabIndex = 0;
 			this.pictureBox.TabStop = false;
 			this.pictureBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_MouseMove);
@@ -55,6 +56,11 @@
 			// 
 			this.saveGameImageDialog.DefaultExt = "png";
 			this.saveGameImageDialog.Filter = "PNG image|*.png|All files|*.*";
+			// 
+			// saveVideoDialog
+			// 
+			this.saveVideoDialog.DefaultExt = "mp4";
+			this.saveVideoDialog.Filter = "Video files|*.mp4|All Files|*.*";
 			// 
 			// MainForm
 			// 
@@ -78,7 +84,7 @@
 		private System.Windows.Forms.PictureBox pictureBox;
 		private System.Windows.Forms.Timer globalTicker;
 		private System.Windows.Forms.SaveFileDialog saveGameImageDialog;
-		private System.Windows.Forms.FolderBrowserDialog selectVideoSaveFolderDialog;
+		private System.Windows.Forms.SaveFileDialog saveVideoDialog;
 	}
 }
 

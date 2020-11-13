@@ -29,6 +29,8 @@ namespace CellularAutomaton
 					mainBuffer[x, y] = random.Next(3) == 0 ? CellStadeKey.Filled : CellStadeKey.Empty;
 				}
 			}
+
+			OnFieldChanged?.Invoke(this);
 		}
 
 		public void ClearField(CellStadeKey clear)
@@ -40,6 +42,8 @@ namespace CellularAutomaton
 					mainBuffer[x, y] = clear;
 				}
 			}
+
+			OnFieldChanged?.Invoke(this);
 		}
 
 		public CellStadeKey[,] GetField()
@@ -78,6 +82,7 @@ namespace CellularAutomaton
 				}
 			}
 
+
 			for (int x = 0; x <= mainBuffer.GetUpperBound(0); x++)
 			{
 				for (int y = 0; y <= mainBuffer.GetUpperBound(1); y++)
@@ -85,11 +90,14 @@ namespace CellularAutomaton
 					mainBuffer[x, y] = buffers[1][x, y];
 				}
 			}
+
+			OnFieldChanged?.Invoke(this);
 		}
 
 		public void SetCell(CellStadeKey stade, int x, int y)
 		{
 			mainBuffer[x, y] = stade;
+			OnFieldChanged?.Invoke(this);
 		}
 
 		private CellStadeKey?[] GetNeighbors(int x, int y)
@@ -142,5 +150,8 @@ namespace CellularAutomaton
 
 			return count;
 		}
+
+
+		public event Action<GameLogic> OnFieldChanged;
 	}
 }

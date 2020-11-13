@@ -9,67 +9,87 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Accord.Video.FFMPEG;
+using StandardLibrary.Other.Stade;
 
 namespace CellularAutomaton
 {
 	public partial class MainForm : Form
 	{
-		private const int resolution = 4;
-		private const int scale = 240;
+		private const int scale = 8;
+		private const int resolution = 100;
 
 		private readonly GameLogic logic;
-		private Task logicUpdateTask;
-		private bool stopped;
-		private bool prepareStop;
-		private bool isRecordingVideo;
-		private int videoFrameIndex;
+		private readonly StadeMachine<GlobalStade, MainForm, StandardStade<GlobalStade, MainForm>> stadeMachine;
+		private readonly Dictionary<Toggle, bool> toggleValues = new Dictionary<Toggle, bool>(Enum.GetValues(typeof(Toggle)).Length);
+		private readonly VideoFileWriter videoWriter = new VideoFileWriter();
 
 
 		public MainForm()
 		{
 			InitializeComponent();
 
-			Height = Width = scale * resolution;
+			Height = Width = resolution * scale;
 
-			logic = new GameLogic(scale, scale);
+			logic = new GameLogic(resolution, resolution);
+			logic.OnFieldChanged += (s) => { UpdateGraphicsFromField(); };
+
+			foreach (var item in Enum.GetValues(typeof(Toggle)).OfType<Toggle>())
+				toggleValues.Add(item, false);
+			
+
+			stadeMachine = new StadeMachine<GlobalStade, MainForm, StandardStade<GlobalStade, MainForm>>(control: this, stades: new StandardStade<GlobalStade, MainForm>[]
+			{
+				new StandardStade<GlobalStade, MainForm>(GlobalStade.Calculating, StadeSelected_Calculating),
+				new StandardStade<GlobalStade, MainForm>(GlobalStade.Running, StadeSelected_Running),
+				new StandardStade<GlobalStade, MainForm>(GlobalStade.Stopped, StadeSelected_Stopped, StadeDeselected_Stopped),
+			});
 		}
 
 		private void GlobalTicker_Tick(object sender, EventArgs e)
 		{
-			if(logicUpdateTask == null) logicUpdateTask = Task.Run(logic.Update);
-			if (logicUpdateTask.IsCompleted == true)
+			var lastStade = stadeMachine.CurrentStade;
+
+			if(lastStade.ShortcutValue == GlobalStade.Running)
 			{
-				if(isRecordingVideo == true && !stopped)
+				stadeMachine.SetStade(GlobalStade.Calculating);
+
+				if(toggleValues[Toggle.IsRecordingVideo] == true)
 				{
-					pictureBox.Image.Save(selectVideoSaveFolderDialog.SelectedPath + Path.DirectorySeparatorChar + videoFrameIndex + ".png");
-					videoFrameIndex++;
+					videoWriter.WriteVideoFrame(pictureBox.Image as Bitmap);
 				}
 
-				UpdateGraphicsFromField();
+				UpdateField();
 
-				if (prepareStop == true) { UpdateStopStatus(); prepareStop = false; }
-
-				if(stopped == false) logicUpdateTask = Task.Run(logic.Update);
+				stadeMachine.SetStade(lastStade.ShortcutValue);
 			}
 		}
+
 		private void MainForm_Load(object sender, EventArgs e)
 		{
 			logic.GenerateRandomField();
 			UpdateGraphicsFromField();
 		}
 
+		private void UpdateField()
+		{
+			logic.Update();
+		}
+
 		private void UpdateGraphicsFromField()
 		{
-			pictureBox.Image = new Bitmap(scale, scale);
+			pictureBox.Image = new Bitmap(resolution * scale, resolution * scale);
 			var graphics = Graphics.FromImage(pictureBox.Image);
-			graphics.FillRectangle(Brushes.Red, new Rectangle(new Point(0, 0), new Size(pictureBox.Width, pictureBox.Height)));
+
+			graphics.FillRectangle(Brushes.Red, new Rectangle(new Point(0, 0), new Size(pictureBox.Image.Width, pictureBox.Image.Height)));
+
 			var mainBuffer = logic.GetField();
 
 			for (int x = 0; x <= mainBuffer.GetUpperBound(0); x++)
 			{
 				for (int y = 0; y <= mainBuffer.GetUpperBound(1); y++)
 				{
-					graphics.FillRectangle(new SolidBrush(CellStade.KeyConverter[mainBuffer[x, y]].DrawColor), new Rectangle(new Point(x, y), new Size(1, 1)));
+					graphics.FillRectangle(new SolidBrush(CellStade.KeyConverter[mainBuffer[x, y]].DrawColor), new Rectangle(new Point(x * scale, y * scale), new Size(scale, scale)));
 				}
 			}
 
@@ -81,12 +101,12 @@ namespace CellularAutomaton
 
 		private void PictureBox_MouseMove(object sender, MouseEventArgs e)
 		{
-			if(stopped)
+			if(stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
 				if(e.Button.HasFlag(MouseButtons.Left))
 				{
 					try
-					{ logic.SetCell(CellStadeKey.Filled, e.Location.X / resolution, e.Location.Y / resolution); }
+					{ logic.SetCell(CellStadeKey.Filled, e.Location.X / scale, e.Location.Y / scale); }
 					catch (Exception) { }
 
 					UpdateGraphicsFromField();
@@ -94,7 +114,7 @@ namespace CellularAutomaton
 				else if(e.Button.HasFlag(MouseButtons.Right))
 				{
 					try
-					{ logic.SetCell(CellStadeKey.Empty, e.Location.X / resolution, e.Location.Y / resolution); }
+					{ logic.SetCell(CellStadeKey.Empty, e.Location.X / scale, e.Location.Y / scale); }
 					catch (Exception) { }
 
 					UpdateGraphicsFromField();
@@ -104,20 +124,17 @@ namespace CellularAutomaton
 
 		private void MainForm_KeyPress(object sender, KeyPressEventArgs e)
 		{
+			bool handled = false;
+
 			if(e.KeyChar == 'f')
 			{
-				if (logicUpdateTask.IsCompleted)
-				{
-					UpdateStopStatus();
-				}
-				else
-				{
-					prepareStop = !stopped;
-				}
+				handled = true;
+				if(stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped) ResumeGame(); else StopGame();
 			}
 
-			if(e.KeyChar == 'r' && stopped == true)
+			if(e.KeyChar == 'r' && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
+				handled = true;
 				var res = MessageBox.Show("Вы уверены что хотите случайно заполнить поле?", "вы нажали клавишу [r]", MessageBoxButtons.YesNo);
 				if(res == DialogResult.Yes)
 				{
@@ -125,8 +142,9 @@ namespace CellularAutomaton
 				}
 			}
 
-			if (e.KeyChar == 'c' && stopped == true)
+			if (e.KeyChar == 'c' && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
+				handled = true;
 				var res = MessageBox.Show("Вы уверены что хотите очистить поле?", "вы нажали клавишу [c]", MessageBoxButtons.YesNo);
 				if (res == DialogResult.Yes)
 				{
@@ -134,8 +152,9 @@ namespace CellularAutomaton
 				}
 			}
 
-			if(e.KeyChar == 's' && stopped == true)
+			if(e.KeyChar == 's' && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
+				handled = true;
 				var res = saveGameImageDialog.ShowDialog();
 				if (res == DialogResult.OK)
 				{
@@ -146,40 +165,83 @@ namespace CellularAutomaton
 
 			if (e.KeyChar == 'v')
 			{
-				if(isRecordingVideo == false && stopped == true)
+				handled = true;
+
+				if(toggleValues[Toggle.IsRecordingVideo] == false && stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 				{
-					if(selectVideoSaveFolderDialog.ShowDialog() == DialogResult.OK)
+					if(saveVideoDialog.ShowDialog() == DialogResult.OK)
 					{
-						isRecordingVideo = true;
-						videoFrameIndex = 0;
-						UpdateStopStatus();
+						toggleValues[Toggle.IsRecordingVideo] = true;
+						videoWriter.Open(saveVideoDialog.FileName, pictureBox.Image.Width, pictureBox.Image.Height, new Accord.Math.Rational(1 / (globalTicker.Interval / 1000f)), VideoCodec.Default);
+						
+						ResumeGame();
 					}
 				}
-				else if(isRecordingVideo == true)
+				else if(toggleValues[Toggle.IsRecordingVideo] == true)
 				{
+					videoWriter.Flush();
+					videoWriter.Close();
+
+					toggleValues[Toggle.IsRecordingVideo] = false;
 					MessageBox.Show("Video frames saved");
-					isRecordingVideo = false;
-					if (stopped == false) UpdateStopStatus();
+					if(stadeMachine.CurrentStade.ShortcutValue != GlobalStade.Stopped) StopGame();
 				}
 			}
 
-			UpdateGraphicsFromField();
+			e.Handled = handled;
 		}
 
-		private void UpdateStopStatus()
+		private void ResumeGame()
 		{
-			if (stopped == false)
-			{
-				MessageBox.Show("Игра остановлена", "вы нажали клавишу [f]");
-				stopped = true;
-				Text = "Клеточный автомат (STOPPED)";
-			}
-			else
+			if(stadeMachine.CurrentStade.ShortcutValue == GlobalStade.Stopped)
 			{
 				MessageBox.Show("Игра востоновлена", "вы нажали клавишу [f]");
-				stopped = false;
-				Text = "Клеточный автомат";
+				stadeMachine.SetStade(GlobalStade.Running);
 			}
+			else throw new InvalidOperationException("Can't Resume non stopped game");
+		}
+
+		private void StopGame()
+		{
+			if (stadeMachine.CurrentStade.ShortcutValue != GlobalStade.Stopped)
+			{
+				MessageBox.Show("Игра остановлена", "вы нажали клавишу [f]");
+				stadeMachine.SetStade(GlobalStade.Stopped);
+			}
+			else throw new InvalidOperationException("Can't Resume non stopped game");
+		}
+
+		private void StadeSelected_Stopped(MainForm _, StadeSelectedEventArgs<GlobalStade, MainForm> args)
+		{
+			Text = "Клеточный автомат (STOPPED)";
+		}
+		
+		private void StadeDeselected_Stopped(MainForm _, StadeDeselectedEventArgs<GlobalStade, MainForm> args)
+		{
+			Text = "Клеточный автомат";
+		}
+		
+		private void StadeSelected_Running(MainForm _, StadeSelectedEventArgs<GlobalStade, MainForm> args)
+		{
+
+		}
+
+		private void StadeSelected_Calculating(MainForm _, StadeSelectedEventArgs<GlobalStade, MainForm> args)
+		{
+
+		}
+
+
+		enum GlobalStade
+		{
+			Running,
+			Calculating,
+			Stopped,
+		}
+
+		enum Toggle
+		{
+			IsRecordingVideo
 		}
 	}
 }
